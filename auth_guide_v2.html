@@ -254,10 +254,10 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
   <div class="sidebar-section" style="margin-top:.5rem">
     <div class="sidebar-section-label">Severity Filter</div>
     <div class="filter-chips">
-      <div class="chip on" onclick="toggleSev('all',this)">All</div>
-      <div class="chip" onclick="toggleSev('crit',this)">Critical</div>
-      <div class="chip" onclick="toggleSev('high',this)">High</div>
-      <div class="chip" onclick="toggleSev('med',this)">Medium</div>
+      <div class="chip on" onclick="toggleSev('all',this);if(window.innerWidth<=768){setTimeout(function(){if(typeof closeSidebar==='function')closeSidebar();},60);window.scrollTo({top:0,behavior:'smooth'});}" >All</div>
+      <div class="chip" onclick="toggleSev('crit',this);if(window.innerWidth<=768){setTimeout(function(){if(typeof closeSidebar==='function')closeSidebar();},60);window.scrollTo({top:0,behavior:'smooth'});}" >Critical</div>
+      <div class="chip" onclick="toggleSev('high',this);if(window.innerWidth<=768){setTimeout(function(){if(typeof closeSidebar==='function')closeSidebar();},60);window.scrollTo({top:0,behavior:'smooth'});}" >High</div>
+      <div class="chip" onclick="toggleSev('med',this);if(window.innerWidth<=768){setTimeout(function(){if(typeof closeSidebar==='function')closeSidebar();},60);window.scrollTo({top:0,behavior:'smooth'});}" >Medium</div>
     </div>
   </div>
 </aside>
@@ -904,7 +904,7 @@ let activeCat='all',activeSev='all',searchQ='',activeId=null;
 function buildNav(){
   document.getElementById('nav-list').innerHTML=CATS.map(c=>{
     const cnt=c.id==='all'?METHODS.length:METHODS.filter(m=>m.cat===c.id).length;
-    return `<div class="nav-item ${c.id===activeCat?'active':''}" onclick="setCat('${c.id}')">
+    return `<div class="nav-item ${c.id===activeCat?'active':''}" onclick="setCat('${c.id}');if(window.innerWidth<=768){setTimeout(function(){if(typeof closeSidebar==='function')closeSidebar();},60);window.scrollTo({top:0,behavior:'smooth'});}"> 
       <div class="nav-dot" style="background:${c.dotBg};color:${c.dot}">${c.id==='all'?'*':c.label[0]}</div>
       <span>${c.label}</span><span class="nav-count">${cnt}</span></div>`;
   }).join('');
@@ -1048,9 +1048,8 @@ buildNav();renderBento();
     const backdrop = document.getElementById('sidebar-backdrop');
     const btn      = document.getElementById('hamburger-btn');
     const isOpen   = sidebar.classList.contains('open');
-    if (isOpen) {
-      closeSidebar();
-    } else {
+    if (isOpen) { closeSidebar(); }
+    else {
       sidebar.classList.add('open');
       backdrop.classList.add('show');
       btn.classList.add('open');
@@ -1063,28 +1062,6 @@ buildNav();renderBento();
     document.getElementById('hamburger-btn').classList.remove('open');
     document.body.style.overflow = '';
   }
-
-  /* ── Patch navigation functions to auto-close sidebar on mobile ── */
-  // Wrap setCat so tapping a category closes the sidebar and shows filtered cards
-  const _origSetCat = window.setCat;
-  window.setCat = function(cat) {
-    _origSetCat(cat);
-    if (window.innerWidth <= 768) {
-      setTimeout(closeSidebar, 80); // tiny delay so filter renders first
-      window.scrollTo({top:0, behavior:'smooth'});
-    }
-  };
-  // Wrap toggleSev so tapping a severity filter also closes sidebar
-  const _origToggleSev = window.toggleSev;
-  window.toggleSev = function(sev, el) {
-    _origToggleSev(sev, el);
-    if (window.innerWidth <= 768) {
-      setTimeout(closeSidebar, 80);
-      window.scrollTo({top:0, behavior:'smooth'});
-    }
-  };
-  // Wrap doSearch so search input on mobile works (sidebar stays open for typing)
-  // No auto-close for search — user may want to keep typing
 </script>
 
 <!-- ══════════════════════════════════════════
