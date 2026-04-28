@@ -1,17 +1,14 @@
 // ============================================================
-//  Firebase Configuration
-//  👉 After creating your Firebase project, replace ALL values
-//     below with your real config from:
-//     Firebase Console → Project Settings → Your Apps → Web App
+//  Firebase Configuration — upskill-vapt project
 // ============================================================
 
 const firebaseConfig = {
-  apiKey:            "PASTE_YOUR_apiKey_HERE",
-  authDomain:        "PASTE_YOUR_authDomain_HERE",
-  projectId:         "PASTE_YOUR_projectId_HERE",
-  storageBucket:     "PASTE_YOUR_storageBucket_HERE",
-  messagingSenderId: "PASTE_YOUR_messagingSenderId_HERE",
-  appId:             "PASTE_YOUR_appId_HERE"
+  apiKey:            "AIzaSyAiJObvsWb828tda2a_7rIr2WTLcbpa0ds",
+  authDomain:        "upskill-vapt.firebaseapp.com",
+  projectId:         "upskill-vapt",
+  storageBucket:     "upskill-vapt.firebasestorage.app",
+  messagingSenderId: "566341681775",
+  appId:             "1:566341681775:web:fee32ed8099031966cc39a"
 };
 
 // Initialize Firebase (shared by index.html and auth_guide_v2.html)
