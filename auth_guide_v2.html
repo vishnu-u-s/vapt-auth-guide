@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auth Methods — VAPT Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-base:#0d0f17;--bg-glass:rgba(20,24,40,0.75);--bg-card:rgba(255,255,255,0.04);
+  --bg-card-hover:rgba(255,255,255,0.07);--border:rgba(255,255,255,0.07);
+  --border-bright:rgba(255,255,255,0.14);--text-primary:#e8eaf6;
+  --text-secondary:#8b90b0;--text-muted:#4a4f6a;
+  --cyan:#7dcfff;--purple:#bb9af7;--green:#9ece6a;--orange:#ff9e64;
+  --red:#f7768e;--blue:#7aa2f7;--yellow:#e0af68;
+  --radius:12px;--radius-sm:8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Outfit',sans-serif;background:var(--bg-base);color:var(--text-primary);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(125,207,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(125,207,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;animation:orb-drift 12s ease-in-out infinite alternate}
+.orb-1{width:500px;height:500px;background:rgba(122,162,247,0.07);top:-100px;right:-100px}
+.orb-2{width:400px;height:400px;background:rgba(187,154,247,0.06);bottom:0;left:-120px;animation-delay:-6s}
+.orb-3{width:300px;height:300px;background:rgba(125,207,255,0.05);top:50%;left:50%;animation-delay:-3s}
+@keyframes orb-drift{from{transform:translate(0,0) scale(1)}to{transform:translate(30px,20px) scale(1.08)}}
+.layout{display:flex;min-height:100vh;position:relative;z-index:1}
+
+/* SIDEBAR */
+.sidebar{width:260px;flex-shrink:0;background:var(--bg-glass);backdrop-filter:blur(20px);border-right:1px solid var(--border);position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;padding:0 0 1.5rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.sidebar-header{padding:1.5rem 1.25rem 1rem;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg-glass);backdrop-filter:blur(20px);z-index:2}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:1rem}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--cyan),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:#0d0f17}
+.logo-text{font-size:14px;font-weight:600;color:var(--text-primary);line-height:1.2}
+.logo-sub{font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+.search{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;font-size:12px;color:var(--text-primary);font-family:'Outfit',sans-serif;outline:none;transition:border-color .2s}
+.search:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(125,207,255,0.1)}
+.search::placeholder{color:var(--text-muted)}
+.sidebar-section{padding:.75rem 1.25rem .25rem}
+.sidebar-section-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.5rem}
+.nav-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:background .15s,color .15s;margin-bottom:2px;font-size:13px;color:var(--text-secondary);border:1px solid transparent}
+.nav-item:hover{background:var(--bg-card-hover);color:var(--text-primary)}
+.nav-item.active{background:rgba(125,207,255,0.08);border-color:rgba(125,207,255,0.2);color:var(--cyan)}
+.nav-dot{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:600;flex-shrink:0}
+.nav-count{margin-left:auto;font-size:10px;font-family:'JetBrains Mono',monospace;opacity:.5}
+.filter-chips{display:flex;flex-wrap:wrap;gap:6px;padding:.5rem 1.25rem}
+.chip{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;transition:all .15s}
+.chip.on{border-color:var(--cyan);color:var(--cyan);background:rgba(125,207,255,0.08)}
+
+/* MAIN */
+.main{flex:1;padding:2rem;overflow-x:hidden}
+.main-title{font-size:28px;font-weight:700;background:linear-gradient(90deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;margin-bottom:.4rem}
+.main-sub{font-size:14px;color:var(--text-secondary);margin-bottom:2rem}
+.stats{display:flex;gap:12px;margin-bottom:2rem;flex-wrap:wrap}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem 1.25rem;flex:1;min-width:120px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card.cyan::before{background:var(--cyan)}.stat-card.purple::before{background:var(--purple)}
+.stat-card.red::before{background:var(--red)}.stat-card.green::before{background:var(--green)}
+.stat-num{font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.stat-card.cyan .stat-num{color:var(--cyan)}.stat-card.purple .stat-num{color:var(--purple)}
+.stat-card.red .stat-num{color:var(--red)}.stat-card.green .stat-num{color:var(--green)}
+.stat-label{font-size:11px;color:var(--text-muted);margin-top:2px}
+.bento{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:1.5rem}
+.auth-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.auth-card:hover{background:var(--bg-card-hover);border-color:var(--border-bright);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.auth-card.active{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(125,207,255,0.2),0 8px 32px rgba(125,207,255,0.1);background:rgba(125,207,255,0.04)}
+.card-top{display:flex;align-items:center;gap:10px;margin-bottom:.7rem}
+.card-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.card-title{font-size:14px;font-weight:600;color:var(--text-primary)}
+.card-cat{font-size:10px;color:var(--text-muted);margin-top:1px}
+.card-desc{font-size:12px;color:var(--text-secondary);line-height:1.55;margin-bottom:.8rem}
+.card-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;display:inline-block}
+.vuln-pills{display:flex;gap:4px;flex-wrap:wrap;margin-top:.6rem}
+.vpill{font-size:9px;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-weight:600}
+.vpill.crit{background:rgba(247,118,142,0.15);color:var(--red);border:1px solid rgba(247,118,142,0.25)}
+.vpill.high{background:rgba(255,158,100,0.15);color:var(--orange);border:1px solid rgba(255,158,100,0.25)}
+.vpill.med{background:rgba(224,175,104,0.15);color:var(--yellow);border:1px solid rgba(224,175,104,0.25)}
+.no-results{text-align:center;padding:3rem;color:var(--text-muted);font-size:14px}
+
+/* DETAIL PANEL */
+.detail-panel{display:none;background:var(--bg-glass);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-top:.5rem;animation:slide-in .25s ease}
+.detail-panel.show{display:block}
+@keyframes slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.detail-hero{padding:1.75rem 2rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:1.25rem;flex-wrap:wrap}
+.detail-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.detail-title{font-size:20px;font-weight:700;color:var(--text-primary);margin-bottom:.3rem}
+.detail-sub{font-size:13px;color:var(--text-secondary)}
+
+/* ── CHILD-FRIENDLY SECTION ── */
+.child-section{background:rgba(125,207,255,0.04);border-bottom:1px solid var(--border);padding:1.5rem 2rem}
+.child-header{display:flex;align-items:center;gap:10px;margin-bottom:1rem}
+.child-emoji{font-size:20px}
+.child-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);background:rgba(125,207,255,0.1);border:1px solid rgba(125,207,255,0.2);padding:3px 10px;border-radius:20px}
+.child-tagline{font-size:12px;color:var(--text-muted);margin-left:auto;font-style:italic}
+.child-analogy{font-size:14px;color:var(--text-secondary);line-height:1.75;background:rgba(0,0,0,0.2);border-radius:var(--radius);padding:1rem 1.25rem;border-left:3px solid var(--cyan);margin-bottom:1rem}
+.child-analogy strong{color:var(--text-primary);font-weight:600}
+.child-analogy .highlight{color:var(--cyan);font-weight:500}
+.child-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+.child-step{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.75rem;text-align:center}
+.child-step-num{font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--cyan);margin-bottom:4px}
+.child-step-text{font-size:12px;color:var(--text-secondary);line-height:1.5}
+.child-step-text strong{color:var(--text-primary);font-weight:500;display:block;margin-bottom:2px}
+.child-warn{font-size:13px;color:var(--text-secondary);line-height:1.65;background:rgba(247,118,142,0.05);border:1px solid rgba(247,118,142,0.15);border-radius:var(--radius-sm);padding:.75rem 1rem;margin-top:.75rem}
+.child-warn strong{color:var(--red);font-weight:600}
+
+/* EXPERT SECTION */
+.expert-divider{padding:.6rem 2rem;background:rgba(187,154,247,0.04);border-top:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.expert-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--purple);background:rgba(187,154,247,0.1);border:1px solid rgba(187,154,247,0.2);padding:3px 10px;border-radius:20px}
+.expert-tagline{font-size:12px;color:var(--text-muted);font-style:italic}
+.detail-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+@media(max-width:800px){.detail-body{grid-template-columns:1fr}}
+.detail-col{padding:1.5rem 2rem;border-right:1px solid var(--border)}
+.detail-col:last-child{border-right:none}
+.section-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin:0 0 .75rem;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.detail-text{font-size:13px;color:var(--text-secondary);line-height:1.7}
+.detail-text strong{color:var(--text-primary);font-weight:500}
+.steps{display:flex;flex-direction:column;gap:8px}
+.step-item{display:flex;gap:10px;align-items:flex-start}
+.step-num{width:20px;height:20px;border-radius:50%;background:rgba(125,207,255,0.1);border:1px solid rgba(125,207,255,0.2);color:var(--cyan);font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-text{font-size:12.5px;color:var(--text-secondary);line-height:1.55}
+.code-block{background:#1a1b26;border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius);padding:1rem 1.25rem;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#a9b1d6;line-height:1.8;white-space:pre-wrap;word-break:break-all;overflow-x:auto;position:relative}
+.code-block::before{content:attr(data-lang);position:absolute;top:8px;right:12px;font-size:9px;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase}
+.code-key{color:#7dcfff}.code-val{color:#9ece6a}.code-string{color:#9ece6a}
+.code-comment{color:#565f89}.code-op{color:#f7768e}.code-num{color:#ff9e64}
+.vuln-list{display:flex;flex-direction:column;gap:6px}
+.vuln-item{display:flex;gap:8px;align-items:flex-start}
+.vuln-badge{font-size:9px;padding:3px 7px;border-radius:4px;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap;flex-shrink:0;margin-top:1px}
+.vuln-badge.crit{background:rgba(247,118,142,0.15);color:#f7768e;border:1px solid rgba(247,118,142,0.3)}
+.vuln-badge.high{background:rgba(255,158,100,0.15);color:#ff9e64;border:1px solid rgba(255,158,100,0.3)}
+.vuln-badge.med{background:rgba(224,175,104,0.15);color:#e0af68;border:1px solid rgba(224,175,104,0.3)}
+.vuln-text{font-size:12px;color:var(--text-secondary);line-height:1.5}
+.tools-row{display:flex;flex-wrap:wrap;gap:6px}
+.tool-pill{font-size:11px;padding:4px 10px;border-radius:6px;background:rgba(122,162,247,0.1);border:1px solid rgba(122,162,247,0.2);color:var(--blue);font-family:'JetBrains Mono',monospace}
+.close-btn{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .15s;display:inline-block}
+.close-btn:hover{background:rgba(255,255,255,0.08);color:var(--text-primary)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:10px}
+
+/* ── AUTH GUARD UI ── */
+.auth-bar{position:fixed;top:14px;right:18px;z-index:999;display:flex;align-items:center;gap:10px;animation:orb-drift 0s}
+.auth-user{font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:20px;padding:5px 12px;display:flex;align-items:center;gap:6px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.auth-user::before{content:'●';color:var(--green);font-size:8px}
+.logout-btn{background:rgba(247,118,142,0.08);border:1px solid rgba(247,118,142,0.22);border-radius:8px;color:var(--red);font-size:12px;font-weight:600;font-family:'Outfit',sans-serif;padding:6px 14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.logout-btn:hover{background:rgba(247,118,142,0.16);border-color:rgba(247,118,142,0.4);transform:translateY(-1px);box-shadow:0 4px 16px rgba(247,118,142,0.15)}
+.logout-btn:active{transform:translateY(0)}
+/* auth loading overlay */
+.auth-overlay{position:fixed;inset:0;background:var(--bg-base);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.auth-overlay-icon{width:48px;height:48px;background:linear-gradient(135deg,var(--cyan),var(--purple));border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:#0d0f17;box-shadow:0 4px 20px rgba(125,207,255,0.25)}
+.auth-spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.auth-overlay p{font-size:13px;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-icon">VA</div>
+      <div><div class="logo-text">Auth Guide</div><div class="logo-sub">VAPT Reference v2.0</div></div>
+    </div>
+    <input class="search" id="search" placeholder="Search methods..." oninput="doSearch(this.value)">
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Categories</div>
+    <div id="nav-list"></div>
+  </div>
+  <div class="sidebar-section" style="margin-top:.5rem">
+    <div class="sidebar-section-label">Severity Filter</div>
+    <div class="filter-chips">
+      <div class="chip on" onclick="toggleSev('all',this)">All</div>
+      <div class="chip" onclick="toggleSev('crit',this)">Critical</div>
+      <div class="chip" onclick="toggleSev('high',this)">High</div>
+      <div class="chip" onclick="toggleSev('med',this)">Medium</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="main-title">Authentication Methods</div>
+  <div class="main-sub">Each card has a <span style="color:var(--cyan)">beginner-friendly explanation</span> at the top, then the <span style="color:var(--purple)">expert technical detail</span> below — click any card to read both</div>
+  <div class="stats">
+    <div class="stat-card cyan"><div class="stat-num" id="s-total">16</div><div class="stat-label">Auth Methods</div></div>
+    <div class="stat-card red"><div class="stat-num">12</div><div class="stat-label">Critical Vulns</div></div>
+    <div class="stat-card purple"><div class="stat-num">8</div><div class="stat-label">Categories</div></div>
+    <div class="stat-card green"><div class="stat-num">15+</div><div class="stat-label">Testing Tools</div></div>
+  </div>
+  <div class="bento" id="bento"></div>
+  <div class="no-results" id="no-results" style="display:none">No results found.</div>
+  <div class="detail-panel" id="detail"></div>
+</main>
+</div>
+
+<!-- Auth loading overlay (shown until Firebase verifies session) -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-overlay-icon">VA</div>
+  <div class="auth-spinner"></div>
+  <p>Verifying session…</p>
+</div>
+
+<!-- Floating auth bar (user email + logout) -->
+<div class="auth-bar" id="auth-bar" style="display:none">
+  <div class="auth-user" id="auth-email">user</div>
+  <button class="logout-btn" id="logout-btn" onclick="doLogout()">⏻ Sign Out</button>
+</div>
+
+<script>
+const METHODS = [
+  {
+    id:'jwt',name:'JWT',full:'JSON Web Token',cat:'token',catLabel:'Token-based',
+    icon:'JWT',iconBg:'rgba(125,207,255,0.15)',iconColor:'#7dcfff',
+    badgeBg:'rgba(125,207,255,0.1)',badgeColor:'#7dcfff',
+    desc:'Signed token carrying user claims, sent in every request header. Stateless — server needs no session storage.',
+    child:{
+      emoji:'🎫',
+      analogy:`Imagine you go to a <strong>theme park</strong>. You show your ID at the gate, they check it, and give you a <span class="highlight">wristband</span>. Now for the rest of the day, every ride just looks at your wristband — nobody calls the gate to check your ID again.<br><br>A JWT is that wristband. After you login once, the server gives you a signed token. Now every time you visit a page, you show the token — the server reads it directly without going to the database. The "signature" on the wristband proves the theme park made it, not a fake one you drew yourself.`,
+      steps:[
+        {num:'1',title:'You Login',text:'You type username + password. Server checks it.'},
+        {num:'2',title:'Wristband Made',text:'Server creates your JWT: your name, role, expiry — all inside.'},
+        {num:'3',title:'Server Signs It',text:'Server stamps it with a secret signature only it knows.'},
+        {num:'4',title:'You Get Token',text:'Token sent to your browser. You keep it.'},
+        {num:'5',title:'Every Request',text:'You show the token. Server reads it and trusts it — no DB check!'},
+        {num:'6',title:'How Signature Works',text:'Server does math: Hash(your data + secret) = signature. To verify, it does the same math again and checks if the result matches.'}
+      ],
+      warn:`<strong>As a hacker:</strong> The token is just base64 — anyone can read what's inside it (open jwt.io and paste any JWT). If the signature secret is weak, you can crack it and forge your own tokens claiming to be admin!`
+    },
+    why:'No server-side session storage needed. Works across microservices and domains. Carries user identity and roles in the token itself.',
+    how:['User logs in with username + password','Server validates and creates JWT: header.payload.signature','JWT sent to client (localStorage or cookie)','Client sends: Authorization: Bearer <token> in every request','Server verifies signature — no database lookup needed'],
+    code:`<span class="code-comment"># JWT Structure (3 parts separated by dots)</span>
+<span class="code-key">Header:</span>  <span class="code-string">{"alg":"RS256","typ":"JWT"}</span>
+<span class="code-key">Payload:</span> <span class="code-string">{"sub":"user123","role":"admin","exp":1714000000}</span>
+<span class="code-key">Sig:</span>     <span class="code-op">HMACSHA256</span>(base64(header)<span class="code-op">+</span>"."<span class="code-op">+</span>base64(payload), secret)
+
+<span class="code-comment"># Verification — server recomputes and compares</span>
+expected_sig = <span class="code-op">HMACSHA256</span>(header+"."+payload, <span class="code-string">server_secret</span>)
+if expected_sig == token_sig: <span class="code-comment">→ valid, no DB needed</span>`,
+    vulns:[
+      {sev:'crit',text:'Algorithm confusion — change alg to "none", bypass signature entirely'},
+      {sev:'crit',text:'Weak HS256 secret — brute force with hashcat or jwt_tool (-C flag)'},
+      {sev:'high',text:'Missing exp claim — token valid forever, never expires'},
+      {sev:'high',text:'Sensitive data in payload — base64 is NOT encryption, anyone decodes it'},
+      {sev:'med',text:'JWT in localStorage — stolen by XSS attack'},
+      {sev:'med',text:'Server skips signature validation — accepts any crafted token'}
+    ],
+    tools:['jwt.io','jwt_tool','hashcat','Burp JWT Editor']
+  },
+  {
+    id:'basic',name:'Basic Auth',full:'HTTP Basic Authentication',cat:'password',catLabel:'Password',
+    icon:'BA',iconBg:'rgba(255,158,100,0.15)',iconColor:'#ff9e64',
+    badgeBg:'rgba(255,158,100,0.1)',badgeColor:'#ff9e64',
+    desc:'Username:password encoded in base64 and sent in every HTTP request header.',
+    child:{
+      emoji:'📬',
+      analogy:`Imagine every time you want to enter a building, you shout your <strong>name and password out loud</strong> at the door. The security guard writes it on a piece of paper, encodes it (but NOT in secret — it's like writing it in pig latin, anyone can decode it), and you carry that paper and show it at <em>every single door</em> in the building.<br><br>That's Basic Auth. Your password is sent with <span class="highlight">every single request</span>. base64 is NOT a lock — it's just a disguise a 5-year-old can see through. If the connection is over plain HTTP (not HTTPS), anyone listening on the network can read your password instantly.`,
+      steps:[
+        {num:'1',title:'You Request',text:'Browser asks for a protected page.'},
+        {num:'2',title:'Server Says 401',text:'"Who are you? Show credentials."'},
+        {num:'3',title:'Browser Encodes',text:'Takes "user:password", converts to base64 — NOT encrypted!'},
+        {num:'4',title:'Sends Every Time',text:'Every request carries: Authorization: Basic dXNlcjpwYXNz'},
+        {num:'5',title:'Server Decodes',text:'Flips base64 back to "user:password", checks database.'}
+      ],
+      warn:`<strong>As a hacker:</strong> If the site uses HTTP (not HTTPS), just run Wireshark on the network. You'll see the base64 string. Decode it instantly — done. You have their password. Also try Burp Intruder to brute-force it directly.`
+    },
+    why:'Extremely simple to implement. No token management. Used in legacy APIs, internal tools, router admin panels.',
+    how:['Client requests resource','Server: 401 WWW-Authenticate: Basic realm="..."','Client encodes username:password in base64','Sends: Authorization: Basic dXNlcjpwYXNz every request','Server decodes base64 and checks credentials'],
+    code:`<span class="code-comment"># Encode</span>
+<span class="code-op">echo</span> -n "admin:password123" | base64
+<span class="code-string">YWRtaW46cGFzc3dvcmQxMjM=</span>
+
+<span class="code-comment"># Decode instantly (NOT secure)</span>
+<span class="code-op">echo</span> "YWRtaW46cGFzc3dvcmQxMjM=" | base64 -d
+<span class="code-string">admin:password123</span>
+
+<span class="code-key">Authorization:</span> <span class="code-string">Basic YWRtaW46cGFzc3dvcmQxMjM=</span>`,
+    vulns:[
+      {sev:'crit',text:'Over HTTP — every request leaks password to anyone on the network'},
+      {sev:'crit',text:'base64 is reversible in 1 second — not encrypted, not hashed'},
+      {sev:'high',text:'No rate limiting — brute force the Authorization header directly'},
+      {sev:'high',text:'Browser caches credentials — persist after logout'},
+      {sev:'med',text:'No token expiry — same password works indefinitely'}
+    ],
+    tools:['Burp Intruder','Hydra','curl -u user:pass','base64 decoder']
+  },
+  {
+    id:'session',name:'Session Cookie',full:'Session-based Authentication',cat:'password',catLabel:'Password',
+    icon:'SC',iconBg:'rgba(158,206,106,0.15)',iconColor:'#9ece6a',
+    badgeBg:'rgba(158,206,106,0.1)',badgeColor:'#9ece6a',
+    desc:'Server creates a session after login, stores session ID in a cookie. Server holds all session state.',
+    child:{
+      emoji:'🎟️',
+      analogy:`You go to a concert. At the entrance you show your ticket, they tear it and give you a <strong>numbered stub</strong>. The concert has a list: "stub #4821 = VIP, stub #4822 = general". Every time you want backstage, you show your stub. They look it up in their list and let you in.<br><br>A session cookie is that stub number. After login, the server creates a record in its database (your stub's meaning) and gives your browser just a random ID number. Your browser sends that number as a cookie on every visit. The <span class="highlight">real information stays on the server</span> — your browser just carries the key to look it up.`,
+      steps:[
+        {num:'1',title:'Login',text:'You send username + password to server.'},
+        {num:'2',title:'Server Creates Session',text:'Server makes a record in its database: "session #xyz = user 42, admin role"'},
+        {num:'3',title:'Cookie Sent',text:'Server sends: Set-Cookie: sessionid=xyz to your browser'},
+        {num:'4',title:'Browser Sends It',text:'Every request automatically includes: Cookie: sessionid=xyz'},
+        {num:'5',title:'Server Looks Up',text:'Server finds session #xyz in DB → knows who you are'}
+      ],
+      warn:`<strong>As a hacker:</strong> If you steal someone's session cookie (via XSS if HttpOnly flag is missing), you can paste it in your browser and you ARE that user — no password needed. Also test: does the session ID still work after logout? It often does!`
+    },
+    why:'Server fully controls session lifecycle. Easy to invalidate instantly. Traditional web app standard.',
+    how:['User submits login form','Server validates, creates session in DB','Sends Set-Cookie: sessionid=abc123; HttpOnly; Secure','Browser auto-includes cookie in all requests','Server looks up sessionid to identify user'],
+    code:`<span class="code-comment"># Server sets cookie after login</span>
+<span class="code-key">Set-Cookie:</span> <span class="code-string">JSESSIONID=ABC123DEF456;</span>
+  Path=<span class="code-string">/</span>; <span class="code-key">HttpOnly</span>; <span class="code-key">Secure</span>; SameSite=<span class="code-string">Strict</span>
+
+<span class="code-comment"># Server-side session store</span>
+{ <span class="code-string">ABC123DEF456</span>: { user_id: <span class="code-num">42</span>, role: <span class="code-string">"admin"</span> } }
+
+<span class="code-comment"># Test: does logout invalidate the session?</span>
+<span class="code-comment"># Copy cookie → logout → paste cookie → still logged in?</span>`,
+    vulns:[
+      {sev:'crit',text:'Session fixation — attacker sets victim session ID before login'},
+      {sev:'crit',text:'Missing HttpOnly — session cookie readable via JavaScript (XSS)'},
+      {sev:'high',text:'Missing Secure flag — cookie sent over HTTP'},
+      {sev:'high',text:'Predictable session ID — low entropy, guessable'},
+      {sev:'high',text:'Not invalidated on logout — old ID still works'},
+      {sev:'med',text:'Missing SameSite — CSRF attacks possible'}
+    ],
+    tools:['Burp Suite','Cookie Editor extension','CSRF PoC generator','Sequencer (entropy)']
+  },
+  {
+    id:'oauth2',name:'OAuth 2.0',full:'Open Authorization 2.0',cat:'federated',catLabel:'Federated',
+    icon:'OA',iconBg:'rgba(187,154,247,0.15)',iconColor:'#bb9af7',
+    badgeBg:'rgba(187,154,247,0.1)',badgeColor:'#bb9af7',
+    desc:'Delegated authorization. Third-party apps access your resources without ever seeing your password.',
+    child:{
+      emoji:'🏨',
+      analogy:`You stay at a hotel. You don't give your house key to the hotel parking valet — instead the hotel gives the valet a <strong>special limited valet key</strong> that only starts the car, can't open your house, and expires tonight.<br><br><span class="highlight">OAuth 2.0 is that valet key system.</span> When you click "Login with Google" on some app, you're not giving that app your Google password. Instead, Google gives the app a <em>limited key</em> (access token) that can only do specific things (scope) and expires. Your password stays at Google only.<br><br><strong>Federated does NOT mean passwordless.</strong> You still use a password — but only with Google/Facebook (the trusted party). The app you're logging into never sees it.`,
+      steps:[
+        {num:'1',title:'You Click "Login with Google"',text:'The app asks Google: "Let this user login. I need their email. My ID is abc123. Send them back to myapp.com/callback"'},
+        {num:'2',title:'Google Asks You',text:'"Do you want to let MyApp see your email?" You say Yes after entering your Google password.'},
+        {num:'3',title:'Code Given',text:'Google sends a short-lived code to the app\'s callback URL. Like a claim ticket.'},
+        {num:'4',title:'App Swaps Code',text:'App privately sends the code to Google: "Here\'s my code + my secret" → Google gives back an access_token.'},
+        {num:'5',title:'App Uses Token',text:'App calls Google APIs using the token. Token = limited valet key.'},
+        {num:'6',title:'What is Scope?',text:'"Scope" = what the valet key can do. "openid email" means only read your email. "drive" means access your files. You see and approve the scope list.'}
+      ],
+      warn:`<strong>As a hacker:</strong> The redirect_uri is the most dangerous part. If the app doesn't strictly validate where to send the code, you can change it to your own URL and steal the authorization code. Also check if the "state" parameter exists — its absence means CSRF attack is possible.`
+    },
+    why:'"Login with Google/Facebook." Third-party integrations without sharing passwords. Separates auth server from resource server.',
+    how:['User clicks "Login with Google"','App redirects: client_id + redirect_uri + scope + state','User authenticates at Google, approves scopes','Google redirects back with authorization code','App exchanges code → access_token + refresh_token','App calls APIs with access_token'],
+    code:`<span class="code-comment"># Step 1 — Authorization request</span>
+GET /authorize?
+  <span class="code-key">response_type=</span><span class="code-string">code</span>
+  &<span class="code-key">client_id=</span><span class="code-string">abc123</span>
+  &<span class="code-key">redirect_uri=</span><span class="code-string">https://app.com/callback</span>  <span class="code-comment">← VALIDATE THIS</span>
+  &<span class="code-key">scope=</span><span class="code-string">openid email</span>              <span class="code-comment">← what access is requested</span>
+  &<span class="code-key">state=</span><span class="code-string">random_csrf_token</span>          <span class="code-comment">← CSRF protection</span>
+
+<span class="code-comment"># Step 2 — Exchange code for token</span>
+POST /token { code, client_secret } → { <span class="code-key">access_token</span>, <span class="code-key">refresh_token</span> }`,
+    vulns:[
+      {sev:'crit',text:'Open redirect — redirect_uri not validated, attacker steals auth code to their server'},
+      {sev:'crit',text:'CSRF — state parameter missing or not validated on callback'},
+      {sev:'high',text:'Auth code interception — leaked via Referer header to third-party'},
+      {sev:'high',text:'Implicit flow — access token exposed directly in URL fragment'},
+      {sev:'med',text:'Overly broad scope — app requests more permissions than needed'}
+    ],
+    tools:['Burp OAuth Scanner','Manual state param testing','jwt.io']
+  },
+  {
+    id:'oidc',name:'OpenID Connect',full:'OpenID Connect (OIDC)',cat:'federated',catLabel:'Federated',
+    icon:'OI',iconBg:'rgba(187,154,247,0.15)',iconColor:'#bb9af7',
+    badgeBg:'rgba(187,154,247,0.1)',badgeColor:'#bb9af7',
+    desc:'Identity layer on top of OAuth 2.0. Adds a signed id_token (JWT) that proves WHO you are.',
+    child:{
+      emoji:'🪪',
+      analogy:`OAuth 2.0 gives you a <strong>hotel room key</strong> (access token) that says "you can open room 302." But it doesn't say WHO you are — it just says what you can access.<br><br>OpenID Connect adds an <span class="highlight">ID card</span> (id_token) on top of that. The ID card says "your name is Alice, email is alice@gmail.com, verified by Google." Now the app knows both what you can do AND who you are.<br><br>Think of it like: OAuth = parking permit, OIDC = parking permit + your driving licence showing your name and face.`,
+      steps:[
+        {num:'1',title:'Same as OAuth 2.0',text:'Exact same flow — but scope MUST include "openid"'},
+        {num:'2',title:'Extra id_token',text:'Token endpoint returns an id_token (a JWT) alongside the access_token'},
+        {num:'3',title:'id_token Contains',text:'Your user ID (sub), email, name, who issued it (iss), when it expires (exp)'},
+        {num:'4',title:'App Verifies',text:'App checks the id_token signature against Google\'s public keys (JWKS endpoint)'},
+        {num:'5',title:'Identity Confirmed',text:'App now knows: WHO you are (id_token) + WHAT you can access (access_token)'}
+      ],
+      warn:`<strong>As a hacker:</strong> Test if the app validates the "iss" (issuer) and "aud" (audience) claims. If not, you could craft a fake id_token from a different provider and the app might accept it.`
+    },
+    why:'OAuth 2.0 handles authorization (can you access?). OIDC adds authentication (who are you?). Modern federated login standard.',
+    how:['Same as OAuth 2.0 but scope includes "openid"','Token endpoint returns id_token (JWT) + access_token','id_token has: sub, email, iss, exp, iat, nonce','App verifies id_token signature via JWKS public keys','User authenticated — no password ever seen by app'],
+    code:`<span class="code-comment"># id_token payload (base64 decoded)</span>
+{
+  <span class="code-key">"iss":</span> <span class="code-string">"https://accounts.google.com"</span>,  <span class="code-comment">← who signed it</span>
+  <span class="code-key">"sub":</span> <span class="code-string">"1234567890"</span>,                  <span class="code-comment">← unique user ID</span>
+  <span class="code-key">"aud":</span> <span class="code-string">"your-client-id"</span>,              <span class="code-comment">← must match YOUR app</span>
+  <span class="code-key">"exp":</span> <span class="code-num">1714003600</span>,                    <span class="code-comment">← expires when?</span>
+  <span class="code-key">"nonce":</span> <span class="code-string">"random_replay_protection"</span>   <span class="code-comment">← prevents replay</span>
+}`,
+    vulns:[
+      {sev:'crit',text:'id_token claims not validated — iss, aud, exp, nonce all unchecked'},
+      {sev:'high',text:'Missing nonce — replay attack with stolen id_token'},
+      {sev:'high',text:'All JWT attacks apply — alg:none, weak secret, claim tampering'},
+      {sev:'med',text:'JWKS endpoint cached forever — key rollover not handled'}
+    ],
+    tools:['jwt_tool','Burp Suite','Manual claim tampering','jwt.io']
+  },
+  {
+    id:'saml',name:'SAML 2.0',full:'Security Assertion Markup Language 2.0',cat:'federated',catLabel:'Federated',
+    icon:'SM',iconBg:'rgba(187,154,247,0.15)',iconColor:'#bb9af7',
+    badgeBg:'rgba(187,154,247,0.1)',badgeColor:'#bb9af7',
+    desc:'XML-based enterprise SSO. Identity Provider signs XML assertions. Used in Salesforce, AWS, GSuite.',
+    child:{
+      emoji:'📜',
+      analogy:`Imagine your company HR gives you an official <strong>signed letter</strong> on company letterhead: "This person is Alice, she's an employee, she has admin access." You take that letter and show it to the office building, the cafeteria, the parking lot — they all trust the letter because it has the <span class="highlight">official company stamp</span> (digital signature).<br><br>SAML is that letter system. Your company's Identity Provider (like Okta or Azure AD) creates a signed XML document saying who you are. You present it to apps (Salesforce, AWS) and they trust it — because they trust the signature.`,
+      steps:[
+        {num:'1',title:'You Visit an App',text:'You go to Salesforce. It doesn\'t know you.'},
+        {num:'2',title:'Redirect to Company IdP',text:'Salesforce redirects you to your company\'s login page (Okta/Azure).'},
+        {num:'3',title:'You Login',text:'You enter your company username + password at your IdP.'},
+        {num:'4',title:'Signed Letter Created',text:'IdP creates an XML document (assertion) saying who you are and signs it with its private key.'},
+        {num:'5',title:'Letter Delivered',text:'Your browser posts this XML to Salesforce.'},
+        {num:'6',title:'App Verifies Stamp',text:'Salesforce checks: is this XML really signed by our trusted IdP? If yes → login granted.'}
+      ],
+      warn:`<strong>As a hacker:</strong> XML Signature Wrapping (XSW) is the most critical SAML attack. You inject your own XML element containing admin privileges NEXT TO the valid signed element. The signature is valid (it covers the real element), but the app processes your injected element. This can give you admin access without knowing anyone's password.`
+    },
+    why:'Enterprise SSO standard for decades. Cross-domain identity federation. Strong signing. Supported by every enterprise app.',
+    how:['User visits Service Provider (SP)','SP generates SAML Request, redirects to IdP','User authenticates at IdP','IdP signs XML SAML Response/Assertion','Browser posts assertion to SP','SP validates signature, grants access'],
+    code:`<span class="code-comment"># SAML Response (simplified)</span>
+&lt;<span class="code-key">samlp:Response</span>&gt;
+  &lt;<span class="code-key">saml:Assertion</span>&gt;
+    &lt;<span class="code-key">saml:NameID</span>&gt;<span class="code-string">user@company.com</span>&lt;/saml:NameID&gt;
+    &lt;<span class="code-key">saml:Attribute</span> Name=<span class="code-string">"Role"</span>&gt;admin&lt;/saml:Attribute&gt;
+    &lt;<span class="code-key">ds:Signature</span>&gt;<span class="code-comment">...IdP private key signature...</span>&lt;/ds:Signature&gt;
+  &lt;/saml:Assertion&gt;
+&lt;/samlp:Response&gt;`,
+    vulns:[
+      {sev:'crit',text:'XML Signature Wrapping (XSW) — inject element alongside valid signature'},
+      {sev:'crit',text:'XXE injection — read server files via XML entity in SAML request'},
+      {sev:'high',text:'Comment injection — user@co<!--x-->mpany.com bypasses NameID check'},
+      {sev:'high',text:'Signature not verified — SP accepts unsigned assertions'},
+      {sev:'med',text:'No NotOnOrAfter check — replay attack with old assertions'}
+    ],
+    tools:['SAML Raider (Burp)','SAMLtool.io','Manual XML editing']
+  },
+  {
+    id:'sso',name:'SSO',full:'Single Sign-On',cat:'federated',catLabel:'Federated',
+    icon:'SS',iconBg:'rgba(187,154,247,0.15)',iconColor:'#bb9af7',
+    badgeBg:'rgba(187,154,247,0.1)',badgeColor:'#bb9af7',
+    desc:'Login once, access many applications. One central Identity Provider handles all authentication.',
+    child:{
+      emoji:'🗝️',
+      analogy:`You work in a big company with 10 different systems — email, payroll, HR portal, helpdesk, file server. Without SSO you'd need 10 separate passwords. With SSO it's like getting a <strong>master key card</strong> when you badge in at reception in the morning.<br><br>You show your ID once at reception. They give you a keycard. Now every door in the building — email, HR, payroll — recognises your keycard. You never enter a password again for the rest of the day. When you leave and return your keycard (logout), <span class="highlight">all doors stop working</span> for you.`,
+      steps:[
+        {num:'1',title:'Visit App A',text:'You go to your company email. It says "Who are you? Go prove it to reception first."'},
+        {num:'2',title:'Redirected to IdP',text:'You\'re sent to Okta/Azure AD — the "reception desk."'},
+        {num:'3',title:'Login Once',text:'Enter company username + password. Done — you get an IdP session.'},
+        {num:'4',title:'App A Gets Proof',text:'IdP tells App A: "I vouch for this person." App A lets you in.'},
+        {num:'5',title:'Visit App B',text:'You visit Jira. It checks with IdP. IdP already has your session — no re-login needed.'},
+        {num:'6',title:'One Logout = All Logout',text:'Logout from IdP → all apps should lose your session immediately.'}
+      ],
+      warn:`<strong>As a hacker:</strong> Test if logout actually kills the IdP session. Many implementations only logout from the current app, not the IdP. You might be able to access other apps even after the user "logged out." Also test if any app accepts the SSO without verifying the assertion signature.`
+    },
+    why:'Enterprise convenience. One login for all apps. Central revocation. Reduced password fatigue. Enforces consistent auth policy.',
+    how:['User visits Service Provider (SP)','SP redirects to Identity Provider (Okta, Azure AD, etc.)','User authenticates once at IdP','IdP issues session token / assertion','User visits other apps — IdP session reused','Logout should propagate to all SPs'],
+    code:`<span class="code-comment"># Three SSO protocols in use</span>
+<span class="code-key">Enterprise:</span>     <span class="code-string">SAML 2.0</span>    <span class="code-comment">← XML assertions</span>
+<span class="code-key">Modern Web:</span>     <span class="code-string">OAuth2+OIDC</span> <span class="code-comment">← JWT tokens</span>
+<span class="code-key">Windows Domain:</span> <span class="code-string">Kerberos</span>    <span class="code-comment">← TGT/service tickets</span>
+
+<span class="code-comment"># Common enterprise IdPs</span>
+<span class="code-string">Okta, Azure AD, Google Workspace, Auth0, Ping</span>`,
+    vulns:[
+      {sev:'crit',text:'Assertion replay — reuse captured SAML assertion to login as victim'},
+      {sev:'high',text:'Logout not propagated — logout from one app, all others still active'},
+      {sev:'high',text:'Any IdP account accesses all linked SPs — overly permissive IdP config'},
+      {sev:'high',text:'Account linking bypass — link attacker account to victim SSO identity'},
+      {sev:'med',text:'SP-initiated SSO without RelayState validation — open redirect'}
+    ],
+    tools:['SAML Raider','Burp Suite','Manual IdP session testing']
+  },
+  {
+    id:'mfa',name:'MFA',full:'Multi-Factor Authentication',cat:'mfa',catLabel:'MFA / OTP',
+    icon:'MF',iconBg:'rgba(255,158,100,0.15)',iconColor:'#ff9e64',
+    badgeBg:'rgba(255,158,100,0.1)',badgeColor:'#ff9e64',
+    desc:'Requires 2+ factors: something you know + something you have + something you are.',
+    child:{
+      emoji:'🔐',
+      analogy:`To get into a bank vault, you need <strong>two things</strong>: the vault combination (something you KNOW) AND a physical keycard (something you HAVE). Even if a thief steals the combination, they can't open the vault without the keycard. Even if they steal the keycard, they can't open it without the combination.<br><br>MFA works the same way. Your <span class="highlight">password</span> = the combination. Your <span class="highlight">phone with the auth app</span> = the keycard. A hacker who steals your password from a data breach still can't login — they don't have your phone.`,
+      steps:[
+        {num:'1',title:'Enter Password',text:'Factor 1: something you KNOW. Standard password.'},
+        {num:'2',title:'Server Asks for More',text:'"Good password. Now prove you have your phone."'},
+        {num:'3',title:'Phone Notified',text:'Your authenticator app generates a code, or you get a push notification.'},
+        {num:'4',title:'Enter Code',text:'Factor 2: something you HAVE. The 6-digit code only your phone can generate right now.'},
+        {num:'5',title:'Both Verified',text:'Only after BOTH factors pass does the server grant you a session.'}
+      ],
+      warn:`<strong>As a hacker:</strong> The most powerful bypass is response manipulation — intercept the MFA check in Burp, find where the server says {"mfa_valid": false} and change it to true. Also try accessing API endpoints directly after completing only step 1 — sometimes MFA is only checked on the web UI, not the API.`
+    },
+    why:'Even if password is stolen, attacker still needs the second factor. Dramatically reduces account takeovers.',
+    how:['User enters password (factor 1)','Server validates password, prompts second factor','User provides OTP from app/SMS or approves push','Server validates second factor','Session granted only after both factors pass'],
+    code:`<span class="code-comment"># Factor categories</span>
+<span class="code-key">Knowledge:</span>  <span class="code-string">password, PIN, security question</span>
+<span class="code-key">Possession:</span> <span class="code-string">phone (OTP), YubiKey, smart card</span>
+<span class="code-key">Inherence:</span>  <span class="code-string">fingerprint, face ID, voice</span>
+
+<span class="code-comment"># Bypass test in Burp — intercept MFA response</span>
+POST /mfa/verify → response: { <span class="code-key">"verified":</span> <span class="code-op">false</span> }
+<span class="code-comment"># Change false → true, forward — does it work?</span>`,
+    vulns:[
+      {sev:'crit',text:'MFA bypass — API endpoints accessible without completing MFA flow'},
+      {sev:'crit',text:'Response manipulation — change mfa_valid: false → true in Burp Repeater'},
+      {sev:'crit',text:'OTP brute force — no rate limiting on 6-digit code submission (1M combinations)'},
+      {sev:'high',text:'SMS OTP — SIM swapping or SS7 attack intercepts the code'},
+      {sev:'high',text:'Remember device token — long-lived, not revoked on password change'},
+      {sev:'med',text:'OTP reuse — same code accepted multiple times'}
+    ],
+    tools:['Burp Repeater (response manip)','Burp Intruder (OTP brute)','Python pyotp']
+  },
+  {
+    id:'otp',name:'OTP / TOTP',full:'One-Time Password (TOTP/HOTP)',cat:'mfa',catLabel:'MFA / OTP',
+    icon:'OT',iconBg:'rgba(255,158,100,0.15)',iconColor:'#ff9e64',
+    badgeBg:'rgba(255,158,100,0.1)',badgeColor:'#ff9e64',
+    desc:'A password valid for one use or one 30-second window. Stolen OTPs are useless immediately after use.',
+    child:{
+      emoji:'⏱️',
+      analogy:`Imagine a <strong>scratch card lottery ticket</strong> that generates a new 6-digit code every 30 seconds — and once you use it, it's dead. Both you and the bank have the same secret recipe to bake this code. Every 30 seconds, you both bake a fresh code using the same recipe (current time + secret seed). If your codes match, you're authentic.<br><br><span class="highlight">The magic is time.</span> Even if a hacker watches you type the code, by the time they try to use it (31 seconds later), it's already expired and a new code has been generated. The secret "recipe" (seed) never travels over the internet after setup.`,
+      steps:[
+        {num:'1',title:'Setup Once',text:'You scan a QR code. This transfers the secret "recipe" (seed) to your phone.'},
+        {num:'2',title:'Time-based Math',text:'Every 30 seconds: HMAC(secret_seed + current_time) → 6 digits'},
+        {num:'3',title:'Same Math Both Sides',text:'Your phone calculates the code. The server independently calculates the same code.'},
+        {num:'4',title:'You Enter Code',text:'Type the 6 digits from your authenticator app.'},
+        {num:'5',title:'Match = Login',text:'Server computes the same code, compares — if they match, you\'re in. Code now dead forever.'}
+      ],
+      warn:`<strong>As a hacker:</strong> Six digits = only 1,000,000 combinations. If the endpoint has no rate limit, use Burp Intruder with a numeric payload 000000 to 999999. At 100 requests/second, you can exhaust all codes in under 3 hours — within the 30-second window, hitting the right code is likely.`
+    },
+    why:'Prevents replay attacks. Code expires in 30s. Even if intercepted, useless after one use. Used in all major 2FA apps.',
+    how:['Shared secret exchanged during setup (QR code)','TOTP: T = floor(unix_time / 30)','HMAC-SHA1(secret, T) truncated to 6 digits','User reads code from authenticator app','Server calculates same code independently and compares'],
+    code:`<span class="code-comment"># TOTP algorithm (RFC 6238)</span>
+T = <span class="code-op">floor</span>(unix_timestamp / <span class="code-num">30</span>)          <span class="code-comment">← 30-sec window</span>
+HMAC = <span class="code-op">HMAC-SHA1</span>(shared_secret, T)
+code = <span class="code-op">truncate</span>(HMAC) % <span class="code-num">1_000_000</span>  <span class="code-comment">← 6 digits</span>
+
+<span class="code-comment"># Brute force math</span>
+Combinations: <span class="code-num">000000</span> → <span class="code-num">999999</span> = <span class="code-num">1M</span>
+<span class="code-comment"># No rate limit + 100 req/s = exhausted in ~3 hours</span>`,
+    vulns:[
+      {sev:'crit',text:'No rate limiting — 1M combinations, brute-forceable with Burp Intruder'},
+      {sev:'high',text:'OTP reuse — same code accepted multiple times in window'},
+      {sev:'high',text:'Extended validity window — some apps accept codes for 5-10 minutes'},
+      {sev:'med',text:'OTP in URL — logged in server access logs'},
+      {sev:'med',text:'Backup codes stored plaintext in database'}
+    ],
+    tools:['Burp Intruder (000000-999999 numeric payload)','Python pyotp','Custom TOTP script']
+  },
+  {
+    id:'apikey',name:'API Key',full:'API Key Authentication',cat:'token',catLabel:'Token-based',
+    icon:'AK',iconBg:'rgba(125,207,255,0.15)',iconColor:'#7dcfff',
+    badgeBg:'rgba(125,207,255,0.1)',badgeColor:'#7dcfff',
+    desc:'Static secret string identifying an application. Sent in header, query param, or body.',
+    child:{
+      emoji:'🔑',
+      analogy:`An API key is like a <strong>gym membership barcode</strong> stuck on your keyring. Every time you visit the gym (send a request), you scan the barcode (send the key). The gym system looks it up and says "yep, that's a paying member, let them in." No username, no password, no face scan — just the barcode.<br><br><span class="highlight">The danger:</span> If you accidentally show your barcode on Instagram (commit it to GitHub), anyone who screenshots it can use YOUR barcode to get into the gym as you — or use YOUR API key to call services as your app, burning your credits or accessing your data.`,
+      steps:[
+        {num:'1',title:'Register App',text:'Developer goes to the API provider, creates an app, receives a key: sk_live_abc123'},
+        {num:'2',title:'Store Securely',text:'Developer stores key in environment variables — NOT in code!'},
+        {num:'3',title:'Send with Requests',text:'Every API call includes: X-API-Key: sk_live_abc123 in the header'},
+        {num:'4',title:'Server Validates',text:'Server looks up the key in its database, checks scope, rate limits.'},
+        {num:'5',title:'Response Returned',text:'Valid key → process request. Invalid → 401 Unauthorized.'}
+      ],
+      warn:`<strong>As a hacker:</strong> Search the target's JavaScript source files in browser DevTools, or search their GitHub repos. Developers often accidentally hardcode API keys in frontend JS or commit them to public repos. Tools like TruffleHog automate this. Once found, the key often has no expiry and full access.`
+    },
+    why:'Machine-to-machine auth. Simple. No user login flow. Used in REST APIs, webhooks, third-party integrations.',
+    how:['Developer gets API key from provider after registration','App includes key in every outbound request','Server validates key against database','Valid → process; Invalid → 401'],
+    code:`<span class="code-comment"># Common key placements</span>
+<span class="code-key">Header:</span>  X-API-Key: <span class="code-string">sk_live_abc123secret</span>
+<span class="code-key">Query:</span>   GET /data?<span class="code-key">api_key=</span><span class="code-string">sk_live_abc123secret</span>  <span class="code-comment">← LOGGED</span>
+<span class="code-key">Body:</span>    { <span class="code-key">"api_key":</span> <span class="code-string">"sk_live_abc123secret"</span> }
+
+<span class="code-comment"># Find in JS source</span>
+grep -r <span class="code-string">"api_key\|apiKey\|API_KEY\|sk_live"</span> ./src/`,
+    vulns:[
+      {sev:'crit',text:'Key in URL — logged in access logs, browser history, Referer headers'},
+      {sev:'crit',text:'Hardcoded in JS/APK — visible in devtools source or decompiled APK'},
+      {sev:'high',text:'No key rotation — compromised key valid forever'},
+      {sev:'high',text:'No scope — one key grants access to everything'},
+      {sev:'med',text:'Key in public GitHub — TruffleHog/GitLeaks finds it in seconds'}
+    ],
+    tools:['Burp Suite','TruffleHog','GitLeaks','ripgrep on source','GitHub search']
+  },
+  {
+    id:'cert',name:'Certificate Auth',full:'Certificate-based Auth (mTLS)',cat:'cert',catLabel:'Certificate',
+    icon:'CA',iconBg:'rgba(224,175,104,0.15)',iconColor:'#e0af68',
+    badgeBg:'rgba(224,175,104,0.1)',badgeColor:'#e0af68',
+    desc:'Client proves identity with a digital certificate signed by a trusted CA. Used in mTLS, VPNs, banking.',
+    child:{
+      emoji:'🏦',
+      analogy:`A bank teller doesn't just look at your face — they look at your <strong>official government-issued ID card</strong>. The ID has a hologram and security features that only the government can make. The teller trusts it because they trust the government (the Certificate Authority).<br><br>Certificate auth works the same. Your device has a digital ID card (certificate) stamped by a trusted authority (CA). When you connect, you show your certificate. The server verifies the stamp — if it's genuine and the CA is trusted, <span class="highlight">no password needed at all</span>. The private key (like the secret embedded in the ID) never leaves your device.`,
+      steps:[
+        {num:'1',title:'Certificate Issued',text:'A trusted CA signs your certificate: "This device belongs to alice@company.com, valid until 2026."'},
+        {num:'2',title:'Private Key Stays Put',text:'Your private key is generated on your device and NEVER sent anywhere.'},
+        {num:'3',title:'TLS Handshake',text:'Server says: "Show me your certificate" during connection setup.'},
+        {num:'4',title:'Certificate Shown',text:'Your device sends the certificate (public info — name, CA stamp, expiry).'},
+        {num:'5',title:'Server Verifies',text:'Server checks: Is this CA trusted? Is this cert expired? Was it revoked? If all good → identity confirmed.'}
+      ],
+      warn:`<strong>As a hacker:</strong> Mobile apps often use certificate pinning to only trust specific certificates. To intercept HTTPS traffic with Burp, you need to bypass this pinning using Frida or the objection tool — they hook into the app at runtime and disable the pinning check.`
+    },
+    why:'Strongest possible auth — no password to steal. Private key never leaves device. Zero-trust architecture standard.',
+    how:['Client has CA-signed certificate','TLS handshake: server requests client certificate','Client presents certificate','Server verifies: valid CA? Not expired? Not revoked (CRL/OCSP)?','Identity extracted from CN/SAN field'],
+    code:`<span class="code-comment"># Inspect a certificate</span>
+<span class="code-op">openssl</span> x509 -in client.crt -text -noout
+
+<span class="code-key">Subject:</span>  CN=api-service, O=Company
+<span class="code-key">Issuer:</span>   CN=Company Internal CA
+<span class="code-key">Valid:</span>    2024-01-01 to 2025-01-01
+<span class="code-key">KeyUsage:</span> digitalSignature, keyEncipherment
+
+<span class="code-comment"># Test mTLS endpoint in curl</span>
+curl --cert client.crt --key client.key https://api.example.com`,
+    vulns:[
+      {sev:'high',text:'Certificate pinning bypass — Frida/objection on mobile to unpin'},
+      {sev:'high',text:'No CRL/OCSP check — revoked certificates still accepted'},
+      {sev:'high',text:'Weak internal CA — small key size or exposed CA private key'},
+      {sev:'med',text:'CN/SAN not strictly validated — any trusted CA cert accepted'},
+      {sev:'med',text:'Long validity period — expired certs accepted due to misconfigured checks'}
+    ],
+    tools:['Burp (client cert import)','openssl','Frida','objection','mitmproxy']
+  },
+  {
+    id:'passkey',name:'Passkeys / FIDO2',full:'Passkeys / FIDO2 / WebAuthn',cat:'modern',catLabel:'Passwordless',
+    icon:'PK',iconBg:'rgba(247,118,142,0.15)',iconColor:'#f7768e',
+    badgeBg:'rgba(247,118,142,0.1)',badgeColor:'#f7768e',
+    desc:'Public key crypto replaces passwords. Private key never leaves your device. Phishing-resistant by design.',
+    child:{
+      emoji:'🔏',
+      analogy:`Imagine a <strong>magic padlock</strong> that works with two keys: a public key (anyone can have a copy) and a private key (only you have it, locked in a vault). The website keeps the public key. Your device keeps the private key in its secure chip (Face ID / fingerprint sensor protects it).<br><br>To login: the website says "prove you have the private key by solving this math puzzle using it." Your device solves it (after you scan your fingerprint) and sends the answer. The website checks the answer using the public key. <span class="highlight">Your private key never leaves your device.</span> There is no password to steal, phish, or forget.`,
+      steps:[
+        {num:'1',title:'Registration',text:'Your device generates a unique key pair. Public key sent to website. Private key stays in your device\'s secure chip.'},
+        {num:'2',title:'Website Stores',text:'Website stores YOUR public key in its database — linked to your account.'},
+        {num:'3',title:'Login Challenge',text:'Website sends a random puzzle (challenge) to your device.'},
+        {num:'4',title:'Biometric Unlock',text:'You scan your fingerprint / face. This unlocks the private key.'},
+        {num:'5',title:'Puzzle Solved',text:'Device signs the challenge with private key → sends signature back.'},
+        {num:'6',title:'Website Verifies',text:'Website uses stored public key to verify the signature. Match = you\'re in.'}
+      ],
+      warn:`<strong>As a hacker:</strong> The main target here is the fallback. Most apps that implement passkeys still allow password login as a backup. Test if you can skip the passkey entirely and use the old password login. Also check if the "challenge" is truly random — a predictable challenge enables a replay attack.`
+    },
+    why:'No password to steal, phish or reuse. Bound to device + origin. Phishing-resistant. Future web auth standard.',
+    how:['Registration: device generates public/private key pair','Private key in secure enclave — never transmitted','Public key stored on server','Login: server sends random challenge','Device signs with private key after biometric unlock','Server verifies signature with stored public key'],
+    code:`<span class="code-comment"># WebAuthn registration (JS)</span>
+const cred = await navigator.credentials.<span class="code-op">create</span>({
+  publicKey: { challenge, rp: { id: <span class="code-string">"app.com"</span> }, user }
+})  <span class="code-comment">← stores publicKey on server</span>
+
+<span class="code-comment"># WebAuthn login</span>
+const assert = await navigator.credentials.<span class="code-op">get</span>({
+  publicKey: { challenge, allowCredentials }
+})  <span class="code-comment">← signature verified against stored publicKey</span>`,
+    vulns:[
+      {sev:'high',text:'Attestation not verified — any authenticator including software ones accepted'},
+      {sev:'high',text:'Static or predictable challenge — enables replay attack'},
+      {sev:'med',text:'RPID not strictly bound — credentials accepted from wrong origin'},
+      {sev:'med',text:'Password fallback — passkey bypassed, old password still works'},
+      {sev:'med',text:'Device binding not enforced — credential exportable'}
+    ],
+    tools:['Browser DevTools (WebAuthn panel)','Burp Suite','Manual flow analysis']
+  },
+  {
+    id:'push',name:'Push Notification',full:'Push Notification Auth (MFA)',cat:'mfa',catLabel:'MFA / OTP',
+    icon:'PN',iconBg:'rgba(255,158,100,0.15)',iconColor:'#ff9e64',
+    badgeBg:'rgba(255,158,100,0.1)',badgeColor:'#ff9e64',
+    desc:'Login sends a push to your phone. Tap Approve or Deny. Used by Duo, Microsoft Authenticator, Okta Verify.',
+    child:{
+      emoji:'📱',
+      analogy:`You're trying to enter a building. You press the buzzer (enter your password). The security guard inside looks at their screen and sees a notification: <strong>"Someone at door 3 says they're Alice. Let them in? YES / NO."</strong> If the real Alice taps YES on her phone, the door opens.<br><br>Push MFA works exactly like this. The guard (auth server) buzzes your registered phone with a notification. You tap Approve. <span class="highlight">The problem:</span> if a hacker keeps buzzing the door repeatedly at 2am, eventually a sleepy or annoyed Alice might accidentally tap Approve just to make it stop. This is called MFA fatigue — and it's a real attack used by Lapsus$ to breach Uber and Microsoft.`,
+      steps:[
+        {num:'1',title:'Enter Password',text:'Hacker (or you) enters username + password.'},
+        {num:'2',title:'Push Sent to Phone',text:'Auth server pushes a notification to the registered phone: "Login attempt from Frankfurt — Approve?"'},
+        {num:'3',title:'User Approves',text:'The real phone owner taps Approve.'},
+        {num:'4',title:'Auth Server Notified',text:'Auth server receives the approval signal.'},
+        {num:'5',title:'Session Granted',text:'Full login session granted — both factors verified.'}
+      ],
+      warn:`<strong>As a hacker (MFA fatigue attack):</strong> If you have valid credentials, script a loop that sends login attempts every 30 seconds, each triggering a push notification to the victim's phone. At 2am they may tap Approve by mistake to stop the notifications. Real attack — used to breach major companies.`
+    },
+    why:'Better UX than OTP — one tap. Shows login context. Harder to phish than SMS. Real-time.',
+    how:['User enters username + password','Server sends push to registered device via Duo/Okta','User sees login details — Approve or Deny','User taps Approve','Auth server receives approval, grants session'],
+    code:`<span class="code-comment"># Push notification payload</span>
+{
+  <span class="code-key">"app":</span>      <span class="code-string">"Company Portal"</span>,
+  <span class="code-key">"ip":</span>       <span class="code-string">"94.23.11.5"</span>,      <span class="code-comment">← show this to user!</span>
+  <span class="code-key">"location":</span> <span class="code-string">"Frankfurt, DE"</span>,
+  <span class="code-key">"time":</span>     <span class="code-string">"2026-04-28 10:30"</span>
+}
+<span class="code-comment"># MFA fatigue: loop login attempts → spam pushes</span>`,
+    vulns:[
+      {sev:'crit',text:'Push bombing / MFA fatigue — spam 50-100 requests, user approves to stop notifications'},
+      {sev:'high',text:'No context in push — user approves without seeing IP/location info'},
+      {sev:'high',text:'Attacker registers own device after initial compromise'},
+      {sev:'med',text:'Push interception on rooted/jailbroken device'}
+    ],
+    tools:['Automated login script (Python/Burp)','Social engineering']
+  },
+  {
+    id:'digest',name:'Digest Auth',full:'HTTP Digest Authentication',cat:'password',catLabel:'Password',
+    icon:'DA',iconBg:'rgba(255,158,100,0.15)',iconColor:'#ff9e64',
+    badgeBg:'rgba(255,158,100,0.1)',badgeColor:'#ff9e64',
+    desc:'Upgrade from Basic Auth. Password is hashed with a server nonce — actual password never sent.',
+    child:{
+      emoji:'🧮',
+      analogy:`Basic Auth was like shouting your password out loud. Digest Auth is smarter — it's like a <strong>math challenge</strong>. The server says "I'm thinking of a random number: 47382." You take your password, mix it with their random number using a formula, and send back the result. The server does the same formula independently and checks if your answers match.<br><br>The actual password never travels. Only the <span class="highlight">result of a calculation</span> does. But the problem? The formula uses MD5 — which was broken long ago. If a hacker captures your answer, they can crack it offline.`,
+      steps:[
+        {num:'1',title:'Request Protected Page',text:'You ask for a page.'},
+        {num:'2',title:'Server Sends Nonce',text:'Server: "Here\'s my random number (nonce): dcd98b7. Use it."'},
+        {num:'3',title:'You Calculate',text:'Client: MD5(username:realm:password) + MD5(that + nonce + uri) = response hash'},
+        {num:'4',title:'Send Hash Only',text:'You send the hash — NOT your password.'},
+        {num:'5',title:'Server Verifies',text:'Server does the same math with stored password. Match = access granted.'}
+      ],
+      warn:`<strong>As a hacker:</strong> Capture the Digest authentication exchange with Wireshark or Burp. The response hash can be cracked offline with hashcat (mode 5500 for NTLMv1 or mode 5600 for NTLMv2 style). MD5 is fast to compute — a modern GPU can test billions of passwords per second.`
+    },
+    why:'Safer than Basic Auth — password never transmitted. Used in IP cameras, routers, legacy HTTP APIs.',
+    how:['Client requests resource','Server: 401 + nonce + realm','Client: MD5(user:realm:pass) + MD5(hash:nonce:uri)','Client sends computed hash in Authorization header','Server recomputes same hash and compares'],
+    code:`<span class="code-comment"># Server challenge</span>
+<span class="code-key">WWW-Authenticate:</span> Digest realm=<span class="code-string">"example.com"</span>,
+  nonce=<span class="code-string">"dcd98b7102dd2f0e8b11d0f600bfb0c093"</span>
+
+<span class="code-comment"># Client response (hash, NOT password)</span>
+<span class="code-key">Authorization:</span> Digest username=<span class="code-string">"user"</span>,
+  response=<span class="code-string">"6629fae49393a05397450978507c4ef1"</span>
+
+<span class="code-comment"># Crack offline</span>
+hashcat -m <span class="code-num">5500</span> captured_hash.txt wordlist.txt`,
+    vulns:[
+      {sev:'high',text:'MD5 is broken — offline crack of captured hash with hashcat in hours'},
+      {sev:'high',text:'No TLS — still vulnerable to session hijacking via MITM'},
+      {sev:'med',text:'Nonce reuse — enables replay attack'},
+      {sev:'med',text:'Downgrade to Basic Auth — attacker strips Digest, forces cleartext'}
+    ],
+    tools:['Burp Suite','hashcat -m 5500/5600','Wireshark','curl']
+  },
+  {
+    id:'adaptive',name:'Adaptive Auth',full:'Adaptive / Risk-based Authentication',cat:'modern',catLabel:'Modern',
+    icon:'AA',iconBg:'rgba(247,118,142,0.15)',iconColor:'#f7768e',
+    badgeBg:'rgba(247,118,142,0.1)',badgeColor:'#f7768e',
+    desc:'Adjusts auth requirements based on real-time risk signals: IP, device, location, time, behavior.',
+    child:{
+      emoji:'🎲',
+      analogy:`Imagine a bouncer at a nightclub who knows all the regulars. <strong>If you're a regular who always comes on Fridays at 9pm, shows up in the same car, from the same city — no problem, walk right in.</strong> But if tonight you show up from a different city, at 3am, in a rental car? The bouncer says "hold on, I need to see more ID, call someone to verify you."<br><br>Adaptive auth is that smart bouncer. Normal behaviour = low friction. Suspicious behaviour = extra verification. <span class="highlight">The risk score decides how much proof you need.</span>`,
+      steps:[
+        {num:'1',title:'Login Attempt',text:'You enter username + password.'},
+        {num:'2',title:'Risk Engine Scores',text:'System checks: Known device? Known IP? Normal location? Normal time? Normal behaviour pattern?'},
+        {num:'3',title:'Low Risk',text:'Score is low (everything normal) → just the password is enough.'},
+        {num:'4',title:'Medium Risk',text:'New device or location → "please also verify with MFA."'},
+        {num:'5',title:'High Risk',text:'"Login from Russia when you\'re in Germany?" → Blocked. Email alert sent.'}
+      ],
+      warn:`<strong>As a hacker:</strong> Try spoofing trusted signals. Add X-Forwarded-For: [trusted_company_ip] header to fake a trusted IP address. Some systems use this header to determine location and skip MFA for "internal" IPs. If the app trusts this header without validation, you bypass the risk engine entirely.`
+    },
+    why:'Balance security vs friction. Normal users aren\'t bothered. Attacks get detected and blocked automatically.',
+    how:['User attempts login','Risk engine evaluates all signals','Low risk → password only','Medium risk → MFA step-up required','High risk → block + alert'],
+    code:`<span class="code-comment"># Risk signals checked</span>
+<span class="code-key">IP reputation:</span>   VPN / Tor / datacenter?
+<span class="code-key">Geolocation:</span>     Impossible travel? New country?
+<span class="code-key">Device:</span>          Known fingerprint? New browser?
+<span class="code-key">Time:</span>            Unusual hours for this account?
+<span class="code-key">Behaviour:</span>       Typing rhythm, mouse movement
+
+<span class="code-comment"># Bypass attempt — spoof trusted IP header</span>
+<span class="code-key">X-Forwarded-For:</span> <span class="code-string">10.0.0.1</span>  <span class="code-comment">← fake internal IP</span>`,
+    vulns:[
+      {sev:'high',text:'IP spoofing via X-Forwarded-For header — bypass MFA step-up for trusted IPs'},
+      {sev:'high',text:'Device fingerprint cloning — copy trusted device fingerprint'},
+      {sev:'med',text:'Different error for high vs low risk — reveals account existence'},
+      {sev:'med',text:'Step-up not enforced on API endpoints — only on web UI'}
+    ],
+    tools:['Burp (header manipulation)','FingerprintJS analysis','Custom IP header spoofing']
+  },
+  {
+    id:'pap',name:'PAP',full:'Password Authentication Protocol',cat:'password',catLabel:'Password',
+    icon:'PP',iconBg:'rgba(255,158,100,0.15)',iconColor:'#ff9e64',
+    badgeBg:'rgba(255,158,100,0.1)',badgeColor:'#ff9e64',
+    desc:'Oldest PPP auth protocol. Sends username and password in complete plaintext. Legacy VPNs only.',
+    child:{
+      emoji:'📢',
+      analogy:`PAP is the absolute worst possible way to authenticate. Imagine you need to get into a secure facility and the procedure is: <strong>walk up to the gate and shout your name and password as loud as you can</strong>. Anyone within earshot hears your password. There's no encryption, no hashing, no disguise of any kind.<br><br>PAP sends your username and password in <span class="highlight">completely plain readable text</span> over the network cable. Anyone with a network sniffer (like Wireshark) who is on the same network can read your credentials instantly. This protocol is from the 1980s and should never be used today — but you still find it in old VPN equipment and legacy RADIUS servers.`,
+      steps:[
+        {num:'1',title:'Connection Starts',text:'Your computer connects to the VPN/remote access server.'},
+        {num:'2',title:'Auth Request Sent',text:'Your computer sends: "Username: alice, Password: mysecret123" — literally in plain text.'},
+        {num:'3',title:'Anyone Can Read It',text:'Any device on the same network path sees this packet and can read it directly.'},
+        {num:'4',title:'Server Checks',text:'Server gets the plaintext, looks it up in its database.'},
+        {num:'5',title:'Accept or Reject',text:'Auth-Ack (approved) or Auth-Nak (rejected) sent back.'}
+      ],
+      warn:`<strong>As a hacker:</strong> If you find PAP in use on a network segment you can reach, just run Wireshark and filter for "pap". The credentials appear in the packet contents in plain text — no cracking, no brute force needed. Instant credential harvest.`
+    },
+    why:'NEVER use in new systems. Legacy only. Exists only for backward compatibility with 1980s equipment.',
+    how:['Client sends PAP Auth-Request with username + password in PLAINTEXT','Server checks credentials','Auth-Ack (success) or Auth-Nak (failure)','No encryption, no hashing, no replay protection'],
+    code:`<span class="code-comment"># PAP packet structure (PPP layer)</span>
+Code:     <span class="code-num">1</span>           <span class="code-comment">(Auth-Request)</span>
+Peer-ID:  <span class="code-string">"username"</span>  <span class="code-comment">← PLAINTEXT</span>
+Password: <span class="code-string">"password"</span>  <span class="code-comment">← PLAINTEXT, no hash</span>
+
+<span class="code-comment"># Capture with Wireshark</span>
+filter: <span class="code-string">ppp.code == 1</span>
+<span class="code-comment"># Credentials visible directly in packet bytes</span>`,
+    vulns:[
+      {sev:'crit',text:'Plaintext on wire — Wireshark reads credentials directly, zero effort'},
+      {sev:'crit',text:'No replay protection — captured packets replayable for auth'},
+      {sev:'high',text:'No mutual auth — client cannot verify server identity'}
+    ],
+    tools:['Wireshark','tcpdump','Any packet capture tool']
+  }
+];
+
+const CATS=[
+  {id:'all',label:'All Methods',dot:'#7dcfff',dotBg:'rgba(125,207,255,0.15)'},
+  {id:'token',label:'Token-based',dot:'#7dcfff',dotBg:'rgba(125,207,255,0.15)'},
+  {id:'password',label:'Password',dot:'#ff9e64',dotBg:'rgba(255,158,100,0.15)'},
+  {id:'federated',label:'Federated / SSO',dot:'#bb9af7',dotBg:'rgba(187,154,247,0.15)'},
+  {id:'mfa',label:'MFA / OTP',dot:'#ff9e64',dotBg:'rgba(255,158,100,0.15)'},
+  {id:'modern',label:'Modern / Passwordless',dot:'#f7768e',dotBg:'rgba(247,118,142,0.15)'},
+  {id:'cert',label:'Certificate',dot:'#e0af68',dotBg:'rgba(224,175,104,0.15)'}
+];
+
+let activeCat='all',activeSev='all',searchQ='',activeId=null;
+
+function buildNav(){
+  document.getElementById('nav-list').innerHTML=CATS.map(c=>{
+    const cnt=c.id==='all'?METHODS.length:METHODS.filter(m=>m.cat===c.id).length;
+    return `<div class="nav-item ${c.id===activeCat?'active':''}" onclick="setCat('${c.id}')">
+      <div class="nav-dot" style="background:${c.dotBg};color:${c.dot}">${c.id==='all'?'*':c.label[0]}</div>
+      <span>${c.label}</span><span class="nav-count">${cnt}</span></div>`;
+  }).join('');
+}
+
+function getFiltered(){
+  return METHODS.filter(m=>{
+    if(activeCat!=='all'&&m.cat!==activeCat)return false;
+    if(searchQ){const q=searchQ.toLowerCase();if(!m.name.toLowerCase().includes(q)&&!m.full.toLowerCase().includes(q)&&!m.desc.toLowerCase().includes(q))return false;}
+    if(activeSev!=='all'&&!m.vulns.some(v=>v.sev===activeSev))return false;
+    return true;
+  });
+}
+
+function renderBento(){
+  const items=getFiltered();
+  const bento=document.getElementById('bento');
+  document.getElementById('no-results').style.display=items.length?'none':'block';
+  document.getElementById('s-total').textContent=items.length;
+  bento.innerHTML=items.map(m=>{
+    const cr=m.vulns.filter(v=>v.sev==='crit').length;
+    const hi=m.vulns.filter(v=>v.sev==='high').length;
+    const me=m.vulns.filter(v=>v.sev==='med').length;
+    return `<div class="auth-card ${m.id===activeId?'active':''}" id="card-${m.id}" onclick="showDetail('${m.id}')">
+      <div class="card-top">
+        <div class="card-icon" style="background:${m.iconBg};color:${m.iconColor}">${m.icon}</div>
+        <div><div class="card-title">${m.name}</div><div class="card-cat">${m.catLabel}</div></div>
+      </div>
+      <div class="card-desc">${m.desc}</div>
+      <span class="card-badge" style="background:${m.badgeBg};color:${m.badgeColor}">${m.catLabel}</span>
+      <div class="vuln-pills">
+        ${cr?`<span class="vpill crit">${cr} CRIT</span>`:''}
+        ${hi?`<span class="vpill high">${hi} HIGH</span>`:''}
+        ${me?`<span class="vpill med">${me} MED</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showDetail(id){
+  if(activeId===id){closeDetail();return;}
+  activeId=id;
+  renderBento();
+  const m=METHODS.find(x=>x.id===id);
+  const d=document.getElementById('detail');
+  d.className='detail-panel show';
+  d.innerHTML=`
+    <div class="detail-hero">
+      <div class="detail-icon" style="background:${m.iconBg};color:${m.iconColor}">${m.icon}</div>
+      <div style="flex:1">
+        <div class="detail-title">${m.full}</div>
+        <div class="detail-sub">${m.desc}</div>
+      </div>
+      <span class="card-badge" style="background:${m.badgeBg};color:${m.badgeColor};font-size:11px;padding:4px 12px">${m.catLabel}</span>
+    </div>
+
+    <div class="child-section">
+      <div class="child-header">
+        <span class="child-emoji">${m.child.emoji}</span>
+        <span class="child-label">Beginner Friendly</span>
+        <span class="child-tagline">Read this first — then the expert section below</span>
+      </div>
+      <div class="child-analogy">${m.child.analogy}</div>
+      <div class="child-steps">
+        ${m.child.steps.map(s=>`<div class="child-step">
+          <div class="child-step-num">${s.num}</div>
+          <div class="child-step-text"><strong>${s.title}</strong>${s.text}</div>
+        </div>`).join('')}
+      </div>
+      <div class="child-warn">${m.child.warn}</div>
+    </div>
+
+    <div class="expert-divider">
+      <span class="expert-label">Expert / Technical</span>
+      <span class="expert-tagline">Technical depth, code structure, and VAPT testing details</span>
+    </div>
+
+    <div class="detail-body">
+      <div class="detail-col">
+        <div class="section-label">Why it's used</div>
+        <div class="detail-text" style="margin-bottom:1.25rem">${m.why}</div>
+        <div class="section-label">How it works (technical)</div>
+        <div class="steps">${m.how.map((s,i)=>`<div class="step-item"><div class="step-num">${i+1}</div><div class="step-text">${s}</div></div>`).join('')}</div>
+        <div style="margin-top:1.25rem">
+          <div class="section-label">Structure / Format</div>
+          <div class="code-block" data-lang="code">${m.code}</div>
+        </div>
+      </div>
+      <div class="detail-col">
+        <div class="section-label">Vulnerabilities to test (VAPT)</div>
+        <div class="vuln-list">${m.vulns.map(v=>`<div class="vuln-item">
+          <span class="vuln-badge ${v.sev}">${v.sev==='crit'?'CRITICAL':v.sev==='high'?'HIGH':'MEDIUM'}</span>
+          <span class="vuln-text">${v.text}</span>
+        </div>`).join('')}</div>
+        <div style="margin-top:1.25rem">
+          <div class="section-label">Tools</div>
+          <div class="tools-row">${m.tools.map(t=>`<span class="tool-pill">${t}</span>`).join('')}</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:.75rem 2rem 1.25rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span style="font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace">${m.vulns.filter(v=>v.sev==='crit').length} critical · ${m.vulns.filter(v=>v.sev==='high').length} high · ${m.vulns.filter(v=>v.sev==='med').length} medium</span>
+      <button class="close-btn" onclick="closeDetail()">Close panel ✕</button>
+    </div>`;
+  d.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function closeDetail(){
+  activeId=null;
+  document.getElementById('detail').className='detail-panel';
+  renderBento();
+}
+
+function setCat(cat){
+  activeCat=cat;activeId=null;
+  document.getElementById('detail').className='detail-panel';
+  buildNav();renderBento();
+}
+
+function doSearch(q){
+  searchQ=q;activeId=null;
+  document.getElementById('detail').className='detail-panel';
+  renderBento();
+}
+
+function toggleSev(sev,el){
+  activeSev=sev;activeId=null;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('detail').className='detail-panel';
+  renderBento();
+}
+
+buildNav();renderBento();
+</script>
+
+<!-- ══════════════════════════════════════════
+     Firebase Auth Guard
+     Redirects to index.html if not signed in
+════════════════════════════════════════════ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+  (function() {
+    const auth = firebase.auth();
+    const overlay = document.getElementById('auth-overlay');
+    const authBar  = document.getElementById('auth-bar');
+    const authEmail = document.getElementById('auth-email');
+
+    // Guard: check auth state once on load
+    auth.onAuthStateChanged(function(user) {
+      if (!user) {
+        // Not signed in → redirect to login
+        window.location.replace('index.html');
+      } else {
+        // Signed in → reveal the app
+        overlay.style.display = 'none';
+        authBar.style.display = 'flex';
+        // Show email (truncated if long)
+        authEmail.textContent = user.email || 'authenticated';
+      }
+    });
+
+    // Logout handler
+    window.doLogout = async function() {
+      const btn = document.getElementById('logout-btn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Signing out…';
+      try {
+        await auth.signOut();
+        window.location.replace('index.html');
+      } catch(e) {
+        btn.disabled = false;
+        btn.textContent = '⏻ Sign Out';
+        alert('Sign out failed. Please try again.');
+      }
+    };
+  })();
+</script>
+</body>
+</html>
