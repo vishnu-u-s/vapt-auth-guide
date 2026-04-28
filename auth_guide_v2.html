@@ -74,13 +74,27 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     height:100vh;
     z-index:1050;
     transform:translateX(-100%);
-    width:280px;
+    width:285px;
     box-shadow:8px 0 40px rgba(0,0,0,0.6);
-    background:#13162a;
+    background:#1e2235;          /* lighter — text visible */
     backdrop-filter:none;
     -webkit-backdrop-filter:none;
+    border-right:1px solid rgba(255,255,255,0.1);
   }
   .sidebar.open{transform:translateX(0)}
+
+  /* Boost text contrast inside sidebar on mobile */
+  .sidebar .sidebar-section-label{color:#7c82a8}
+  .sidebar .nav-item{color:#a0a5c8;font-size:14px;padding:9px 12px}
+  .sidebar .nav-item.active{color:var(--cyan);background:rgba(125,207,255,0.1)}
+  .sidebar .nav-item:hover{color:#e8eaf6;background:rgba(255,255,255,0.07)}
+  .sidebar .logo-text{font-size:15px}
+  .sidebar .logo-sub{color:#7c82a8}
+  .sidebar .search{font-size:13px;padding:9px 12px;color:#e8eaf6;background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.12)}
+  .sidebar .search::placeholder{color:#7c82a8}
+  .sidebar .chip{color:#a0a5c8;border-color:rgba(255,255,255,0.12);font-size:12px;padding:4px 12px}
+  .sidebar .chip.on{color:var(--cyan);border-color:rgba(125,207,255,0.4);background:rgba(125,207,255,0.1)}
+  .sidebar .sidebar-header{background:#1e2235}
 
   /* Main content takes full width */
   .main{padding:1rem;padding-top:3.5rem}
@@ -1040,7 +1054,7 @@ buildNav();renderBento();
       sidebar.classList.add('open');
       backdrop.classList.add('show');
       btn.classList.add('open');
-      document.body.style.overflow = 'hidden'; // prevent bg scroll
+      document.body.style.overflow = 'hidden';
     }
   }
   function closeSidebar() {
@@ -1049,12 +1063,28 @@ buildNav();renderBento();
     document.getElementById('hamburger-btn').classList.remove('open');
     document.body.style.overflow = '';
   }
-  // Close sidebar when a nav item is clicked (mobile UX)
-  document.addEventListener('click', function(e) {
-    if (e.target.closest('.nav-item') && window.innerWidth <= 768) {
-      closeSidebar();
+
+  /* ── Patch navigation functions to auto-close sidebar on mobile ── */
+  // Wrap setCat so tapping a category closes the sidebar and shows filtered cards
+  const _origSetCat = window.setCat;
+  window.setCat = function(cat) {
+    _origSetCat(cat);
+    if (window.innerWidth <= 768) {
+      setTimeout(closeSidebar, 80); // tiny delay so filter renders first
+      window.scrollTo({top:0, behavior:'smooth'});
     }
-  });
+  };
+  // Wrap toggleSev so tapping a severity filter also closes sidebar
+  const _origToggleSev = window.toggleSev;
+  window.toggleSev = function(sev, el) {
+    _origToggleSev(sev, el);
+    if (window.innerWidth <= 768) {
+      setTimeout(closeSidebar, 80);
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+  };
+  // Wrap doSearch so search input on mobile works (sidebar stays open for typing)
+  // No auto-close for search — user may want to keep typing
 </script>
 
 <!-- ══════════════════════════════════════════
