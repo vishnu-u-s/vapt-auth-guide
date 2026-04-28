@@ -26,7 +26,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .layout{display:flex;min-height:100vh;position:relative;z-index:1}
 
 /* SIDEBAR */
-.sidebar{width:260px;flex-shrink:0;background:var(--bg-glass);backdrop-filter:blur(20px);border-right:1px solid var(--border);position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;padding:0 0 1.5rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.sidebar{width:260px;flex-shrink:0;background:var(--bg-glass);backdrop-filter:blur(20px);border-right:1px solid var(--border);position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;padding:0 0 1.5rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;transition:transform .3s ease}
 .sidebar-header{padding:1.5rem 1.25rem 1rem;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg-glass);backdrop-filter:blur(20px);z-index:2}
 .logo{display:flex;align-items:center;gap:10px;margin-bottom:1rem}
 .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--cyan),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:#0d0f17}
@@ -46,8 +46,71 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .chip{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;transition:all .15s}
 .chip.on{border-color:var(--cyan);color:var(--cyan);background:rgba(125,207,255,0.08)}
 
+/* ── HAMBURGER BUTTON (mobile only) ── */
+.hamburger{display:none;position:fixed;top:14px;left:14px;z-index:1100;background:var(--bg-glass);backdrop-filter:blur(12px);border:1px solid var(--border-bright);border-radius:9px;padding:8px 11px;cursor:pointer;flex-direction:column;gap:5px;transition:all .2s}
+.hamburger span{display:block;width:20px;height:2px;background:var(--text-primary);border-radius:2px;transition:all .3s}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+/* Backdrop for mobile sidebar */
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;backdrop-filter:blur(2px);animation:fade-in .2s ease}
+.sidebar-backdrop.show{display:block}
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+
 /* MAIN */
 .main{flex:1;padding:2rem;overflow-x:hidden}
+
+/* ═══════════════════════════════════════
+   MOBILE RESPONSIVE  ≤ 768px
+═══════════════════════════════════════ */
+@media(max-width:768px){
+  /* Show hamburger button */
+  .hamburger{display:flex}
+
+  /* Sidebar becomes a fixed drawer, hidden off-screen by default */
+  .sidebar{
+    position:fixed;
+    top:0;left:0;
+    height:100vh;
+    z-index:1050;
+    transform:translateX(-100%);
+    width:280px;
+    box-shadow:8px 0 40px rgba(0,0,0,0.5);
+  }
+  .sidebar.open{transform:translateX(0)}
+
+  /* Main content takes full width */
+  .main{padding:1rem;padding-top:3.5rem}
+
+  /* Auth bar smaller and repositioned */
+  .auth-bar{top:10px;right:10px;gap:6px}
+  .auth-user{max-width:120px;font-size:10px;padding:4px 9px;display:none} /* hide email on very small */
+  .logout-btn{font-size:11px;padding:5px 10px}
+
+  /* Main title smaller */
+  .main-title{font-size:20px}
+  .main-sub{font-size:12px;margin-bottom:1.25rem}
+
+  /* Stats row: 2 per row */
+  .stats{gap:8px}
+  .stat-card{min-width:calc(50% - 4px);flex:1 1 calc(50% - 4px)}
+  .stat-num{font-size:20px}
+
+  /* Cards: full width single column */
+  .bento{grid-template-columns:1fr;gap:10px}
+
+  /* Detail panel full-width, readable */
+  .detail-body{grid-template-columns:1fr}
+  .detail-hero{padding:1.25rem 1rem;gap:1rem}
+  .detail-col{padding:1.25rem 1rem}
+  .child-section{padding:1.25rem 1rem}
+
+  /* Code blocks don't overflow */
+  .code-block{font-size:10.5px;padding:.75rem 1rem}
+
+  /* Child steps: 1 column */
+  .child-steps{grid-template-columns:1fr}
+}
 .main-title{font-size:28px;font-weight:700;background:linear-gradient(90deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;margin-bottom:.4rem}
 .main-sub{font-size:14px;color:var(--text-secondary);margin-bottom:2rem}
 .stats{display:flex;gap:12px;margin-bottom:2rem;flex-wrap:wrap}
@@ -159,7 +222,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <div class="layout">
 
 <!-- SIDEBAR -->
-<aside class="sidebar">
+<aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <div class="logo">
       <div class="logo-icon">VA</div>
@@ -197,6 +260,14 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
   <div class="detail-panel" id="detail"></div>
 </main>
 </div>
+
+<!-- Mobile hamburger button -->
+<button class="hamburger" id="hamburger-btn" aria-label="Toggle navigation" onclick="toggleSidebar()">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- Backdrop overlay for mobile sidebar -->
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
 
 <!-- Auth loading overlay (shown until Firebase verifies session) -->
 <div class="auth-overlay" id="auth-overlay">
@@ -951,6 +1022,36 @@ function toggleSev(sev,el){
 }
 
 buildNav();renderBento();
+</script>
+
+<script>
+  /* ── Mobile sidebar toggle ── */
+  function toggleSidebar() {
+    const sidebar  = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    const btn      = document.getElementById('hamburger-btn');
+    const isOpen   = sidebar.classList.contains('open');
+    if (isOpen) {
+      closeSidebar();
+    } else {
+      sidebar.classList.add('open');
+      backdrop.classList.add('show');
+      btn.classList.add('open');
+      document.body.style.overflow = 'hidden'; // prevent bg scroll
+    }
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-backdrop').classList.remove('show');
+    document.getElementById('hamburger-btn').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  // Close sidebar when a nav item is clicked (mobile UX)
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.nav-item') && window.innerWidth <= 768) {
+      closeSidebar();
+    }
+  });
 </script>
 
 <!-- ══════════════════════════════════════════
